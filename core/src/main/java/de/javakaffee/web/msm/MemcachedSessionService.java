@@ -17,31 +17,18 @@
 package de.javakaffee.web.msm;
 
 
-import static de.javakaffee.web.msm.Statistics.StatsType.DELETE_FROM_MEMCACHED;
-import static de.javakaffee.web.msm.Statistics.StatsType.LOAD_FROM_MEMCACHED;
-import static de.javakaffee.web.msm.Statistics.StatsType.SESSION_DESERIALIZATION;
-
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.security.Principal;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.regex.Pattern;
-
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
+import de.javakaffee.web.msm.BackupSessionService.SimpleFuture;
+import de.javakaffee.web.msm.BackupSessionTask.BackupResult;
+import de.javakaffee.web.msm.LockingStrategy.LockingMode;
+import de.javakaffee.web.msm.MemcachedNodesManager.MemcachedClientCallback;
 import net.spy.memcached.BinaryConnectionFactory;
 import net.spy.memcached.ConnectionFactory;
 import net.spy.memcached.ConnectionFactoryBuilder;
 import net.spy.memcached.DefaultConnectionFactory;
+import net.spy.memcached.FailureMode;
 import net.spy.memcached.MemcachedClient;
 import net.spy.memcached.auth.AuthDescriptor;
 import net.spy.memcached.auth.PlainCallbackHandler;
-
 import org.apache.catalina.Container;
 import org.apache.catalina.Context;
 import org.apache.catalina.LifecycleException;
@@ -55,14 +42,21 @@ import org.apache.catalina.session.StandardSession;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 
-import com.couchbase.client.CouchbaseClient;
-import com.couchbase.client.CouchbaseConnectionFactoryBuilder;
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.security.Principal;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Pattern;
 
-import de.javakaffee.web.msm.BackupSessionService.SimpleFuture;
-import de.javakaffee.web.msm.BackupSessionTask.BackupResult;
-import de.javakaffee.web.msm.LockingStrategy.LockingMode;
-import de.javakaffee.web.msm.MemcachedNodesManager.MemcachedClientCallback;
-import net.spy.memcached.FailureMode;
+import static de.javakaffee.web.msm.Statistics.StatsType.DELETE_FROM_MEMCACHED;
+import static de.javakaffee.web.msm.Statistics.StatsType.LOAD_FROM_MEMCACHED;
+import static de.javakaffee.web.msm.Statistics.StatsType.SESSION_DESERIALIZATION;
 
 /**
  * This is the core of memcached session manager, managing sessions in memcached.
@@ -497,12 +491,7 @@ public class MemcachedSessionService {
         try {
             final ConnectionType connectionType = ConnectionType.valueOf(memcachedNodesManager.isCouchbaseBucketConfig(), _username, _password);
             if (connectionType.isCouchbaseBucketConfig()) {
-            	// For membase connectivity: http://docs.couchbase.org/membase-sdk-java-api-reference/membase-sdk-java-started.html
-            	// And: http://code.google.com/p/spymemcached/wiki/Examples#Establishing_a_Membase_Connection
-                final CouchbaseConnectionFactoryBuilder factory = new CouchbaseConnectionFactoryBuilder();
-                factory.setOpTimeout(_operationTimeout);
-                factory.setFailureMode(FailureMode.Redistribute);
-                return new CouchbaseClient(factory.buildCouchbaseConnection(memcachedNodesManager.getCouchbaseBucketURIs(), _username, _password));
+                throw new RuntimeException("Couchbase is not supported in this fork");
             }
             final ConnectionFactory connectionFactory = createConnectionFactory(memcachedNodesManager, connectionType, statistics);
             return new MemcachedClient(connectionFactory, memcachedNodesManager.getAllMemcachedAddresses());
